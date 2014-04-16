@@ -65,30 +65,34 @@ X = [ones(m, 1), X];
 
 stage_one = [ones(m, 1), sigmoid(Theta1 * X')'];
 stage_two = sigmoid(Theta2 * stage_one')';
+%fprintf('size(stage_two): %d, %d\n', size(stage_two, 1), size(stage_two, 2));
 
-for i=1:m
-	for k=1:num_labels
-		J = J + ( -(y(i)==k) * log(stage_two(i, k)) - ( 1 - (y(i)==k) ) * log(1 - stage_two(i, k)) );
-	end
+y_k = zeros(m, num_labels);
+
+for i = 1:num_labels
+	y_k(:,i) = y == i;
 end
-J = J/m;
-% J = - 1/m * sum (sum(  log(stage_two) + (num_labels - 1) * log(1 - stage_two) ) ); 
 
+for i = 1:m
+	J = J + 1/m * ( -log(stage_two(i, :)) * y_k(i,:)' - log(1 - stage_two(i, :)) * (1 - y_k(i,:)') ); 
+end
 
-
-
-
-
-
-
-
-
-
-
-
-
+J = J + lambda/(2*m) * (sum( sum(Theta1(:,2:end).^2)) + sum( sum(Theta2(:,2:end).^2)));
 
 % -------------------------------------------------------------
+
+D2 = 0;
+D1 = 0;
+for t = 1:m
+	d3k = (stage_two(t,:) - y_k(t,:))';
+	d2k = Theta2'*d3k .* [0; sigmoidGradient(Theta1 * X(t,:)')];
+	D1 = D1 + d2k(2:end)*X(t,:);
+	D2 = D2 + d3k*stage_one(t,:);
+end
+Theta1_grad = D1/m;
+Theta1_grad(:,2:end) = Theta1_grad(:,2:end) + lambda/m * Theta1(:,2:end);
+Theta2_grad = D2/m;
+Theta2_grad(:,2:end) = Theta2_grad(:,2:end) + lambda/m * Theta2(:,2:end);
 
 % =========================================================================
 
